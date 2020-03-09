@@ -9,6 +9,7 @@ const Location = require('../../models/Location');
 const tokenAuthorizer = require('../../middleware/auth');
 const _ = require('lodash');
 const axios = require('axios');
+const { Validator } = require('node-input-validator');
 
 const router = express.Router();
 
@@ -22,7 +23,7 @@ router.get('/getLocations', tokenAuthorizer, async (req, res) => {
 	try {
 		await checkIfValidUser(userID);
 
-		const locationss = [];
+		const locations = [];
 		// make a call to the DB to get all locations that match
 		// prefs and send back to user.
 
@@ -33,11 +34,40 @@ router.get('/getLocations', tokenAuthorizer, async (req, res) => {
 	}
 });
 
+function sortAscending(a, b) {
+	return new Date(a.dateStart).getTime() - new Date(b.dateStart).getTime();
+}
+
+// dates is an object.
 router.post('/requestBooking', tokenAuthorizer, async (req, res) => {
-	const { locationID } = req.body;
+	const { locationID, dates } = req.body;
 	const userID = req.id;
 
 	try {
+		const dateStart = dates.start;
+		const dateEnd = dates.end;
+
+		const v = new Validator(req.body, {
+			locationID: 'string',
+			dateStart: 'date',
+			dateEnd: 'date'
+		});
+		const matched = await v.check();
+		if (!matched) {
+			throw new Error('Validation error');
+		}
+
+		// sort all the dates in ascending order
+		// get all bookings of the location
+		const location = await Location.findOne({ _id: locationID });
+		const bookings = JSON.parse(location.bookings);
+		bookings.sort(sortAscending);
+
+		let canBook = false;
+		for (booking of bookings) {
+			if (booking.dateStart > dateStart && bookingdateEnd < dateEnd) throw new Error("Can't book these dates");
+		}
+
 		const user = await User.findOne({ _id: userID });
 		const pastBookings = JSON.parse(user.pendingBookings);
 
@@ -62,6 +92,14 @@ router.post('/sendBookingRequest', tokenAuthorizer, async (req, res) => {
 	const ownerID = req.id;
 
 	try {
+		const v = new Validator(req.body, {
+			locationID: 'string'
+		});
+		const matched = await v.check();
+		if (!matched) {
+			throw new Error('Validation error');
+		}
+
 		const owner = await User.findOne({ _id: ownerID });
 		const bookingRequests = JSON.parse(owner.bookingRequests);
 
@@ -87,6 +125,14 @@ router.post('/denyBookingRequest', tokenAuthorizer, async (req, res) => {
 	const ownerID = req.id;
 
 	try {
+		const v = new Validator(req.body, {
+			locationID: 'string'
+		});
+		const matched = await v.check();
+		if (!matched) {
+			throw new Error('Validation error');
+		}
+
 		const owner = await User.findOne({ _id: ownerID });
 		const bookingRequests = JSON.parse(owner.bookingRequests);
 
@@ -112,6 +158,15 @@ router.post('/acceptBookingRequest', tokenAuthorizer, async (req, res) => {
 	const ownerID = req.id;
 
 	try {
+		const v = new Validator(req.body, {
+			locationID: 'string',
+			bookingReqInfo: 'string'
+		});
+		const matched = await v.check();
+		if (!matched) {
+			throw new Error('Validation error');
+		}
+
 		const owner = await User.findOne({ _id: ownerID });
 		const bookings = JSON.parse(owner.bookings);
 
@@ -135,6 +190,20 @@ router.post('/createLocation', async (req, res) => {
 	const { userID, pictures, long, lat, keywords, amenities, maxPeople } = req.body;
 
 	try {
+		const v = new Validator(req.body, {
+			userID: 'string',
+			pictures: 'string',
+			long: 'string',
+			lat: 'string',
+			keywords: 'string',
+			amenities: 'string',
+			maxPeople: 'numeric'
+		});
+		const matched = await v.check();
+		if (!matched) {
+			throw new Error('Validation error');
+		}
+
 		const locationFields = {};
 		const user = await User.findOne({ _id: userID });
 		const zip = getZipcode(long, lat);
