@@ -63,9 +63,9 @@ router.post('/requestBooking', tokenAuthorizer, async (req, res) => {
 		const bookings = JSON.parse(location.bookings);
 		bookings.sort(sortAscending);
 
-		let canBook = false;
 		for (booking of bookings) {
 			if (booking.dateStart > dateStart && bookingdateEnd < dateEnd) throw new Error("Can't book these dates");
+			if (booking.dateStart < dateStart && booking.dateStart < dateEnd) throw new Error("Can't book these dates");
 		}
 
 		const user = await User.findOne({ _id: userID });
@@ -250,6 +250,56 @@ router.post('/deleteLocation', async (req, res) => {
 	} catch (e) {
 		console.log(e.message);
 		res.json({ result: false, error: e.message });
+	}
+});
+
+router.get('getMessages', async (req, res) => {});
+router.post('/addMessage', async (req, res) => {
+	const { messageContent, sender, locationID } = req.body;
+
+	try {
+		const location = await Location.findOne({ _id: locationID });
+		const user = await User.findOne({ _id: location.ownerID });
+
+		if (!location) throw new Error('Location not found');
+		if (!user) throw new Error('User not found');
+		const communications = JSON.parse(user.communications);
+
+		// TODO – you need to use an interface here
+		// msgs are organized based on location ID
+		let index = -1;
+		for (var i = 0; i < communications.length; i++) {
+			var com = communications[i];
+			if (com.location == locationID) {
+				index = i;
+				break;
+			}
+		}
+
+		var messages = [];
+		if (index == -1) {
+			var newComObject = {};
+			newComObject.location = locationID;
+			messages = [];
+			communications.push(newComObject);
+			index = communications.length - 1;
+		} else {
+			messages = communications[index].messages;
+		}
+
+		const message = {
+			content: messageContent,
+			sender: sender,
+			date: Date.now()
+		};
+		messages.push(message);
+		communications[index].messages = messages;
+		user.communications = JSON.stringify(communications);
+		await user.save();
+		res.json({ msg: user, result: true });
+	} catch (e) {
+		console.log(e.message);
+		res.json({ error: e.message, result: false });
 	}
 });
 

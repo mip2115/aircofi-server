@@ -67,6 +67,11 @@ const UserSchema = new mongoose.Schema({
 	},
 	bookingRequests: {
 		type: String,
+
+		default: `[]`
+	},
+	communications: {
+		type: String,
 		default: `[]`
 	}
 });
