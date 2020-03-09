@@ -1,0 +1,6 @@
+{
+  "articles": ["articl1", "article2", "article3"],
+  "university": "University of Colarado",
+  "preference": "men",
+  "gender": "woman"
+}

@@ -1,0 +1,35 @@
+{
+	"name": "server",
+	"version": "1.0.0",
+	"description": "",
+	"main": "server.js",
+	"scripts": {
+		"server": "nodemon server",
+
+		"testServer": "nodemon -r dotenv/config server --test",
+		"dev": "nodemon -r dotenv/config server --dev",
+		"test": "mocha --timeout 10000"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"aws-sdk": "^2.600.0",
+		"axios": "^0.19.1",
+		"bcryptjs": "^2.4.3",
+		"body-parser": "^1.19.0",
+		"commander": "^4.1.0",
+		"express": "^4.17.1",
+		"jsonwebtoken": "^8.5.1",
+		"lodash": "^4.17.15",
+		"mocha": "^7.0.0",
+		"mongoose": "^5.8.6",
+		"node-input-validator": "^4.1.0",
+		"nodemon": "^2.0.2",
+		"schm": "^0.4.1",
+		"uuid": "^3.3.3"
+	},
+	"devDependencies": {
+		"dotenv": "^8.2.0"
+	}
+}
